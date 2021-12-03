@@ -1,56 +1,30 @@
-use std::str::FromStr;
+use crate::day021::{Direction, DirectionScalar};
 
-pub struct Position {
+pub struct TargetPosition {
     x: i32,
     y: i32,
+    aim: i32,
 }
 
-pub enum Direction {
-    FORWARD,
-    DOWN,
-    UP,
-}
+impl TargetPosition {
+    fn new() -> Self {
+        Self { x: 0, y: 0, aim: 0 }
+    }
 
-impl FromStr for Direction {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "forward" => Ok(Direction::FORWARD),
-            "down" => Ok(Direction::DOWN),
-            "up" => Ok(Direction::UP),
-            _ => Err(format!(
-                "invalid direction: `{}`: should be one of forward, down or up",
-                s
-            )),
+    pub fn change_direction_with_aim(&mut self, direction_scalar: &DirectionScalar) {
+        match direction_scalar.0 {
+            Direction::FORWARD => {
+                self.x += direction_scalar.1;
+                self.y += self.aim * direction_scalar.1
+            }
+            Direction::DOWN => self.aim += direction_scalar.1,
+            Direction::UP => self.aim -= direction_scalar.1,
         }
     }
-}
 
-pub struct DirectionScalar(pub Direction, pub i32);
-
-impl DirectionScalar {
-    pub fn new(scalar: (&str, i32)) -> Self {
-        let direction = Direction::from_str(&scalar.0.to_ascii_lowercase()).unwrap();
-        Self(direction, scalar.1)
-    }
-}
-
-impl Position {
-    pub fn new() -> Self {
-        Self { x: 0, y: 0 }
-    }
-
-    pub fn change_in_one_direction(&mut self, direction: &DirectionScalar) {
-        match direction.0 {
-            Direction::FORWARD => self.x += direction.1,
-            Direction::DOWN => self.y += direction.1,
-            Direction::UP => self.y -= direction.1,
-        };
-    }
-
-    pub fn change_in_multiple_directions(&mut self, directions: &[DirectionScalar]) {
+    pub fn change_in_multiple_directions_with_aim(&mut self, directions: &[DirectionScalar]) {
         for direction in directions {
-            self.change_in_one_direction(direction)
+            self.change_direction_with_aim(direction)
         }
     }
 
@@ -60,8 +34,8 @@ impl Position {
 }
 
 #[test]
-fn test_change_direction() {
-    let mut position = Position::new();
+fn test_can_change_in_multiple_directions_with_aim() {
+    let mut position = TargetPosition::new();
     let directions = vec![
         ("Forward", 5),
         ("down", 5),
@@ -76,15 +50,14 @@ fn test_change_direction() {
         .map(|dir_scalar| DirectionScalar::new((dir_scalar.0, dir_scalar.1)))
         .collect();
 
-    position.change_in_multiple_directions(&ds);
+    position.change_in_multiple_directions_with_aim(&ds);
 
-    assert_eq!(position.net_distance(), 150);
+    assert_eq!(position.net_distance(), 900);
 }
 
 #[test]
-fn test_change_submarine_direction_larger_array() {
-    let mut position = Position::new();
-
+fn test_can_change_in_multiple_directions_with_aim_larger_array() {
+    let mut position = TargetPosition::new();
     let directions = vec![
         ("forward", 2),
         ("forward", 6),
@@ -1093,7 +1066,7 @@ fn test_change_submarine_direction_larger_array() {
         .map(|dir_scalar| DirectionScalar::new((dir_scalar.0, dir_scalar.1)))
         .collect();
 
-    position.change_in_multiple_directions(&ds);
+    position.change_in_multiple_directions_with_aim(&ds);
 
-    assert_eq!(position.net_distance(), 2019945);
+    assert_eq!(position.net_distance(), 1599311480);
 }
